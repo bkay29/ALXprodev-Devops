@@ -1,24 +1,23 @@
 #!/usr/bin/env bash
+# data_extraction_automation-0x01
 # Extract Pokémon info from data.json using jq, awk, sed
-
 JSON_FILE="data.json"
 
-# Check if JSON file exists and is not empty
+# Check if data.json exists and is not empty
 if [ ! -s "$JSON_FILE" ]; then
-    echo "Error: $JSON_FILE is missing or empty."
-    exit 1
+  echo "Error: $JSON_FILE is missing or empty."
+  exit 1
 fi
 
-# Extract fields using jq
+# Extract raw values
 name=$(jq -r '.name' "$JSON_FILE" | sed 's/.*/\u&/')    # Capitalize first letter
-height=$(jq -r '.height' "$JSON_FILE")
-weight=$(jq -r '.weight' "$JSON_FILE")
+height=$(jq -r '.height' "$JSON_FILE")                 # decimeters
+weight=$(jq -r '.weight' "$JSON_FILE")                 # hectograms
 type=$(jq -r '.types[0].type.name' "$JSON_FILE" | sed 's/.*/\u&/')
 
-# Convert height & weight to human units
-# (Pokémon API stores height in decimeters and weight in hectograms)
-height_m=$(echo "$height" | awk '{printf "%.1f", $1/10}')
-weight_kg=$(echo "$weight" | awk '{printf "%.0f", $1/10}')
+# Format height and weight using awk (height -> meters with one decimal, weight -> kg rounded)
+formatted_height=$(awk -v h="$height" 'BEGIN{printf "%.1f", h/10}')
+formatted_weight=$(awk -v w="$weight" 'BEGIN{printf "%.0f", w/10}')
 
-# Output formatted result
-echo "$name is of type $type, weighs ${weight_kg}kg, and is ${height_m}m tall."
+# variable names
+echo "$name is of type $type, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
