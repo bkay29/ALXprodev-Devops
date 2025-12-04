@@ -1,28 +1,37 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bash 
 # batchProcessing-0x02
 # Fetch multiple Pokémon and save each to its own file
 
-POKEMON_LIST=("Bulbasaur" "Ivysaur" "Venusaur" "Charmander" "Charmeleon")
+POKEMON_LIST=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 OUT_DIR="pokemon_data"
 
 # Create output directory if it doesn't exist
 mkdir -p "$OUT_DIR"
 
 for pokemon in "${POKEMON_LIST[@]}"; do
-    # Convert to lowercase for output file naming
-    lowercase_name=$(echo "$pokemon" | tr '[:upper:]' '[:lower:]')
+    echo "Fetching data for ${pokemon}..."
 
-    echo "Fetching data for ${lowercase_name}..."
+    # --- RETRY LOGIC ---
+    max_retries=3
+    retry_count=0
 
-    # API URL
-    API_URL="https://pokeapi.co/api/v2/pokemon/${lowercase_name}"
+    while [ $retry_count -lt $max_retries ]; do
+        API_URL="https://pokeapi.co/api/v2/pokemon/${pokemon}"
 
-    # Fetch and save to JSON file
-    if curl -sS -f "$API_URL" -o "$OUT_DIR/${lowercase_name}.json"; then
-        echo "Saved data to ${OUT_DIR}/${lowercase_name}.json"
-    else
-        echo "Failed to fetch data for ${pokemon}. Skipping..."
+        if curl -sS -f "$API_URL" -o "$OUT_DIR/${pokemon}.json"; then
+            echo "Saved data to ${OUT_DIR}/${pokemon}.json"
+            break
+        else
+            retry_count=$((retry_count + 1))
+            echo "Request failed for ${pokemon} (attempt ${retry_count}/3)"
+            sleep 1
+        fi
+    done
+
+    if [ $retry_count -eq $max_retries ]; then
+        echo "Failed to fetch $pokemon after 3 attempts. Skipping..."
     fi
+    # ----------------------------------------
 
     # Sleep to avoid rate limits
     sleep 2
