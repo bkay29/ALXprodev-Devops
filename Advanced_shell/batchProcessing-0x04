@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# batchProcessing-0x04
+# Fetch multiple Pokémon in parallel and save each to its own file
+
+POKEMON_LIST=("Bulbasaur" "Ivysaur" "Venusaur" "Charmander" "Charmeleon")
+OUT_DIR="pokemon_data_parallel"
+
+# Create output directory if it doesn't exist
+mkdir -p "$OUT_DIR"
+
+# Function to fetch one Pokémon
+fetch_pokemon() {
+    local pokemon="$1"
+    local lowercase_name
+    lowercase_name=$(echo "$pokemon" | tr '[:upper:]' '[:lower:]')
+    local API_URL="https://pokeapi.co/api/v2/pokemon/${lowercase_name}"
+
+    echo "Fetching data for ${lowercase_name}..."
+    if curl -sS -f "$API_URL" -o "$OUT_DIR/${lowercase_name}.json"; then
+        echo "Saved data to ${OUT_DIR}/${lowercase_name}.json"
+    else
+        echo "Failed to fetch data for ${pokemon}. Skipping..."
+    fi
+}
+
+# Loop through Pokémon and fetch in parallel
+for pokemon in "${POKEMON_LIST[@]}"; do
+    fetch_pokemon "$pokemon" &
+done
+
+# Wait for all background processes to finish
+wait
+
+echo "All Pokémon fetched. Parallel processing complete."
