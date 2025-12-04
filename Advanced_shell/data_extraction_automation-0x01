@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Extract Pokémon info from data.json using jq, awk, sed
+
+JSON_FILE="data.json"
+
+# Check if JSON file exists and is not empty
+if [ ! -s "$JSON_FILE" ]; then
+    echo "Error: $JSON_FILE is missing or empty."
+    exit 1
+fi
+
+# Extract fields using jq
+name=$(jq -r '.name' "$JSON_FILE" | sed 's/.*/\u&/')    # Capitalize first letter
+height=$(jq -r '.height' "$JSON_FILE")
+weight=$(jq -r '.weight' "$JSON_FILE")
+type=$(jq -r '.types[0].type.name' "$JSON_FILE" | sed 's/.*/\u&/')
+
+# Convert height & weight to human units
+# (Pokémon API stores height in decimeters and weight in hectograms)
+height_m=$(echo "$height" | awk '{printf "%.1f", $1/10}')
+weight_kg=$(echo "$weight" | awk '{printf "%.0f", $1/10}')
+
+# Output formatted result
+echo "$name is of type $type, weighs ${weight_kg}kg, and is ${height_m}m tall."
